@@ -11,5 +11,17 @@
         "AA:A5:5E:1F:DC:21:44:1D:15:FB:04:4A:C9:6E:CA:4A:24:52:66:46:E9:CC:51:19:66:AB:73:0E:A2:BA:56:F1"
       ]
     }
+  },
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "io.github.rahimachy26.colourbysums",
+      "sha256_cert_fingerprints": [
+        "A1:A9:F7:1C:9B:F6:7D:92:27:97:F4:51:E5:9B:80:74:E4:78:F0:61:10:36:E8:92:CE:6E:9F:EE:BE:5F:25:5B"
+      ]
+    }
   }
 ]
