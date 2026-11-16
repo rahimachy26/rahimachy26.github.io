@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Colour by Sums: Kids Maths</title>
+<meta name="theme-color" content="#4d96ff">
+<meta name="description" content="A colouring game for children that practises numbers, adding, taking away and times tables.">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+/* VOICE: cheerful, simple, big — made for a 6-year-old's finger
+   IDEA: a colouring book page with a box of numbered crayons
+   PICTURE: the colouring picture itself, large, at the top
+   COLOUR and TYPE: sky blue page, white paper, bright crayons; Baloo 2 rounded letters
+   LAYOUT: picture then crayons below on phones; crayons beside the picture on wide screens */
+:root{color-scheme:light dark;--bg:light-dark(#8fd8ff,#14243d);--paper:light-dark(#fff,#1f3352);--ink:light-dark(#1d2a44,#f2f6ff);--soft:light-dark(#e8f6ff,#2a4166);--line:#1d2a44}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:18px/1.4 "Baloo 2",system-ui,sans-serif;overflow-x:clip;-webkit-tap-highlight-color:transparent}
+.wrap{max-width:1040px;margin:0 auto;padding:14px max(3vw,10px) 28px}
+h1{font-size:clamp(30px,6vw,46px);line-height:1.05;margin:0;font-weight:800}
+.top{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 16px;margin-bottom:10px}
+.stars{font-weight:800;font-size:22px;background:var(--paper);border-radius:999px;padding:4px 16px;white-space:nowrap}
+.row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
+.pill{font:inherit;font-weight:700;font-size:17px;min-height:46px;padding:4px 16px;border-radius:999px;border:3px solid var(--line);background:var(--paper);color:var(--ink);cursor:pointer}
+.pill[aria-pressed=true]{background:#ffd93d;color:#1d2a44}
+.pill:focus-visible,.crayon:focus-visible{outline:4px solid #ff5d8f;outline-offset:2px}
+.game{display:grid;grid-template-columns:minmax(0,1fr) 230px;gap:14px;align-items:start}
+.board{background:var(--paper);border-radius:22px;padding:10px;border:4px solid var(--line);position:relative}
+.board svg{display:block;width:100%;height:auto;max-height:72vh;touch-action:manipulation}
+.reg{stroke:#1d2a44;stroke-width:3;stroke-linejoin:round;cursor:pointer;transition:fill .35s}
+.lab{font:800 22px "Baloo 2",sans-serif;fill:#1d2a44;text-anchor:middle;dominant-baseline:middle;pointer-events:none}
+.lab.sm{font-size:15px}
+.shake{animation:sh .4s}
+@keyframes sh{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.side{display:flex;flex-direction:column;gap:12px}
+.msg{background:var(--paper);border:4px solid var(--line);border-radius:18px;padding:10px 14px;font-weight:700;font-size:19px;min-height:72px}
+.box{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.crayon{font:inherit;display:flex;align-items:center;gap:8px;min-height:52px;border:3px solid var(--line);border-radius:14px 30px 30px 14px;padding:4px 10px;cursor:pointer;color:#fff;font-weight:800;font-size:24px;text-shadow:0 1px 2px #0008;transition:transform .15s}
+.crayon .nm{font-size:14px;font-weight:700}
+.crayon[aria-pressed=true]{transform:translateX(8px) scale(1.06);box-shadow:0 0 0 4px #fff,0 0 0 7px #1d2a44}
+.crayon.hint{animation:wig .6s 3}
+@keyframes wig{50%{transform:rotate(-6deg) scale(1.1)}}
+.tools{display:flex;gap:8px;flex-wrap:wrap}
+.done{position:absolute;inset:0;display:none;place-items:center;background:#0006;border-radius:18px}
+.done.on{display:grid}
+.card{background:var(--paper);border:4px solid var(--line);border-radius:22px;padding:18px 24px;text-align:center;max-width:90%}
+.card h2{font-size:38px;line-height:1.05;margin:0 0 6px}
+.conf{position:fixed;top:-20px;width:12px;height:18px;border-radius:3px;pointer-events:none;animation:fall 2.4s linear forwards}
+@keyframes fall{to{transform:translateY(110vh) rotate(720deg)}}
+@media(max-width:700px){.game{grid-template-columns:1fr}.box{grid-template-columns:repeat(4,minmax(0,1fr))}.crayon{flex-direction:column;gap:0;border-radius:14px;padding:4px}.crayon .nm{font-size:12px}.msg{min-height:60px;font-size:17px}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <h1>Colour by Sums: Kids Maths</h1>
+    <div class="stars" id="stars">⭐ 0</div>
+  </div>
+  <div class="row" id="modes" aria-label="Choose a level">
+    <button class="pill" data-m="num">1 2 3</button>
+    <button class="pill" data-m="add">➕ to 10</button>
+    <button class="pill" data-m="sub">➖ to 10</button>
+    <button class="pill" data-m="miss">❓ Missing number</button>
+    <button class="pill" data-m="add20">➕ to 20</button>
+    <button class="pill" data-m="sub20">➖ from 20</button>
+    <button class="pill" data-m="big">🔢 Two-digit sums</button>
+    <button class="pill" data-m="x2">✖️ 2s, doubles &amp; halves</button>
+    <button class="pill" data-m="x5">✖️ 5 times table</button>
+    <button class="pill" data-m="tens">🔟 10s</button>
+  </div>
+  <div class="row" id="pics" aria-label="Choose a picture">
+    <button class="pill" data-p="0">🚀 Rocket</button>
+    <button class="pill" data-p="1">🏠 House</button>
+    <button class="pill" data-p="2">🐠 Fish</button>
+    <button class="pill" data-p="3">🦋 Butterfly</button>
+    <button class="pill" data-p="4">🌈 Rainbow</button>
+  </div>
+  <div class="game">
+    <div class="board">
+      <svg id="art" viewBox="0 0 400 400" role="img" aria-label="Colouring picture"></svg>
+      <div class="done" id="done"><div class="card"><h2>Well done! 🎉</h2><p id="doneTxt">You coloured the whole picture!</p><button class="pill" id="next">Next picture ➜</button></div></div>
+    </div>
+    <div class="side">
+      <div class="msg" id="msg">Pick a crayon, then tap a part of the picture that matches its number!</div>
+      <div class="box" id="box"></div>
+      <div class="tools">
+        <button class="pill" id="talk" aria-pressed="true">🔊 Read aloud</button>
+        <button class="pill" id="again">↺ Start again</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+{
+const COLS=[null,
+ {c:'#e63946',n:'red'},{c:'#f4a261',n:'orange'},{c:'#ffd93d',n:'yellow'},{c:'#52b788',n:'green'},
+ {c:'#4d96ff',n:'blue'},{c:'#9b5de5',n:'purple'},{c:'#8d5a3b',n:'brown'},{c:'#2b2d6e',n:'navy'}];
+const PICS=[
+ [ // rocket
+  {t:'rect',a:'x="0" y="0" width="400" height="400"',n:8,x:330,y:330},
+  {t:'circle',a:'cx="70" cy="80" r="40"',n:4,x:70,y:82},
+  {t:'polygon',a:'points="330,55 340,80 367,80 345,96 353,122 330,106 307,122 315,96 293,80 320,80"',n:3,x:330,y:92,s:1},
+  {t:'path',a:'d="M155 210 L110 290 L155 270Z"',n:6,x:140,y:262,s:1},
+  {t:'path',a:'d="M245 210 L290 290 L245 270Z"',n:6,x:260,y:262,s:1},
+  {t:'path',a:'d="M170 270 L230 270 L200 350Z"',n:2,x:200,y:296},
+  {t:'path',a:'d="M200 60 C240 110 250 180 245 270 L155 270 C150 180 160 110 200 60Z"',n:1,x:200,y:232},
+  {t:'circle',a:'cx="200" cy="155" r="27"',n:5,x:200,y:157}
+ ],
+ [ // house
+  {t:'rect',a:'x="0" y="0" width="400" height="260"',n:5,x:230,y:45},
+  {t:'rect',a:'x="0" y="260" width="400" height="140"',n:4,x:60,y:350},
+  {t:'circle',a:'cx="70" cy="70" r="38"',n:3,x:70,y:72},
+  {t:'rect',a:'x="330" y="240" width="20" height="70"',n:7,x:340,y:285,s:1},
+  {t:'circle',a:'cx="340" cy="210" r="36"',n:4,x:340,y:212},
+  {t:'rect',a:'x="110" y="170" width="180" height="150"',n:2,x:145,y:250},
+  {t:'polygon',a:'points="95,175 200,90 305,175"',n:1,x:200,y:148},
+  {t:'rect',a:'x="180" y="240" width="45" height="80"',n:7,x:202,y:285},
+  {t:'rect',a:'x="235" y="195" width="42" height="42"',n:3,x:256,y:217,s:1}
+ ],
+ [ // fish
+  {t:'rect',a:'x="0" y="0" width="400" height="360"',n:5,x:80,y:60},
+  {t:'rect',a:'x="0" y="360" width="400" height="40"',n:3,x:300,y:381},
+  {t:'path',a:'d="M40 360 Q20 300 50 250 Q75 300 62 360Z"',n:4,x:48,y:320,s:1},
+  {t:'circle',a:'cx="330" cy="70" r="20"',n:6,x:330,y:72,s:1},
+  {t:'path',a:'d="M140 140 Q190 75 245 140Z"',n:6,x:192,y:122,s:1},
+  {t:'polygon',a:'points="285,200 365,135 365,265"',n:1,x:338,y:200},
+  {t:'ellipse',a:'cx="185" cy="200" rx="110" ry="70"',n:2,x:160,y:215},
+  {t:'circle',a:'cx="245" cy="185" r="15"',n:8,x:245,y:187,s:1}
+ ],
+ [ // butterfly
+  {t:'rect',a:'x="0" y="0" width="400" height="400"',n:5,x:60,y:370},
+  {t:'path',a:'d="M195 190 C120 60 40 80 60 160 C70 200 140 205 195 200Z"',n:6,x:150,y:178},
+  {t:'path',a:'d="M205 190 C280 60 360 80 340 160 C330 200 260 205 205 200Z"',n:6,x:250,y:178},
+  {t:'path',a:'d="M195 205 C130 210 70 260 110 310 C140 340 185 290 195 215Z"',n:2,x:140,y:268},
+  {t:'path',a:'d="M205 205 C270 210 330 260 290 310 C260 340 215 290 205 215Z"',n:2,x:260,y:268},
+  {t:'circle',a:'cx="105" cy="130" r="20"',n:3,x:105,y:132,s:1},
+  {t:'circle',a:'cx="295" cy="130" r="20"',n:3,x:295,y:132,s:1},
+  {t:'ellipse',a:'cx="200" cy="205" rx="13" ry="80"',n:7,x:200,y:110,s:1}
+ ],
+ [ // rainbow
+  {t:'rect',a:'x="0" y="0" width="400" height="300"',n:5,x:200,y:270},
+  {t:'circle',a:'cx="345" cy="55" r="32"',n:3,x:345,y:57},
+  {t:'path',a:'d="M20 300 A180 180 0 0 1 380 300 L355 300 A155 155 0 0 0 45 300Z"',n:1,x:200,y:133},
+  {t:'path',a:'d="M45 300 A155 155 0 0 1 355 300 L330 300 A130 130 0 0 0 70 300Z"',n:2,x:200,y:158,s:1},
+  {t:'path',a:'d="M70 300 A130 130 0 0 1 330 300 L305 300 A105 105 0 0 0 95 300Z"',n:3,x:200,y:183,s:1},
+  {t:'path',a:'d="M95 300 A105 105 0 0 1 305 300 L280 300 A80 80 0 0 0 120 300Z"',n:4,x:200,y:208,s:1},
+  {t:'path',a:'d="M120 300 A80 80 0 0 1 280 300 L255 300 A55 55 0 0 0 145 300Z"',n:6,x:200,y:233,s:1},
+  {t:'rect',a:'x="0" y="300" width="400" height="100"',n:4,x:200,y:352}
+ ]];
+const LV={num:k=>k,add:k=>k,sub:k=>k,miss:k=>k,add20:k=>k+10,sub20:k=>k,x2:k=>k*2,x5:k=>k*5,tens:k=>k*10,big:k=>k+30};
+const val=n=>LV[mode](n);
+const $=id=>document.getElementById(id);
+let mode='num',pic=0,sel=0,qs=[],filled=[],tries=[],stars=0,talk=true;
+try{stars=+localStorage.getItem('cbs-stars')||0}catch(e){}
+const rnd=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
+const plus=(a,b)=>({txt:a+'+'+b,say:a+' plus '+b}),minus=(a,b)=>({txt:a+'−'+b,say:a+' take away '+b});
+function makeQ(n){
+  const v=val(n);
+  if(mode==='num')return{txt:''+v,say:''+v};
+  if(mode==='add'){const a=v>1?rnd(1,v-1):0;return plus(a,v-a)}
+  if(mode==='sub'){const b=rnd(1,4);return minus(v+b,b)}
+  if(mode==='miss'){
+    if(v>1&&Math.random()<.5){const b=rnd(1,v-1);return{txt:'?−'+b+'='+(v-b),say:'what take away '+b+' makes '+(v-b)}}
+    const a=rnd(1,9);return{txt:a+'+?='+(a+v),say:a+' plus what makes '+(a+v)};
+  }
+  if(mode==='add20'){const a=rnd(Math.max(2,v-9),Math.min(9,v-2));return plus(a,v-a)}
+  if(mode==='sub20'){const b=rnd(Math.max(3,11-v),Math.min(12,20-v));return minus(v+b,b)}
+  const r3=rnd(0,2);
+  if(mode==='x2')return r3===0?{txt:n+'×2',say:n+' times 2'}:r3===1?{txt:'double '+n,say:'double '+n}:{txt:'½ of '+(2*v),say:'half of '+(2*v)};
+  if(mode==='x5')return{txt:n+'×5',say:n+' times 5'};
+  if(mode==='big'){
+    if(r3===0){const b=rnd(3,9);return plus(v-b,b)}
+    if(r3===1){const b=rnd(2,9);return minus(v+b,b)}
+    const t=10*rnd(1,2);return plus(v-t,t);
+  }
+  if(r3===0)return{txt:n+'×10',say:n+' times 10'};
+  if(n>1&&Math.random()<.5){const a=10*rnd(1,n-1);return plus(a,v-a)}
+  const b=10*rnd(1,3);return minus(v+b,b);
+}
+function say(t){if(!talk)return;try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.lang='en-GB';u.rate=.9;speechSynthesis.speak(u)}catch(e){}}
+let ac;function beep(f,d){try{ac=ac||new (window.AudioContext||window.webkitAudioContext)();const o=ac.createOscillator(),g=ac.createGain();o.frequency.value=f;o.type='triangle';g.gain.setValueAtTime(.2,ac.currentTime);g.gain.exponentialRampToValueAtTime(.001,ac.currentTime+d);o.connect(g).connect(ac.destination);o.start();o.stop(ac.currentTime+d)}catch(e){}}
+function msg(t){$('msg').textContent=t}
+function showStars(){$('stars').textContent='⭐ '+stars;try{localStorage.setItem('cbs-stars',stars)}catch(e){}}
+function draw(){
+  const P=PICS[pic];
+  $('art').innerHTML=P.map((r,i)=>`<${r.t} class="reg" data-i="${i}" ${r.a} fill="${filled[i]?COLS[r.n].c:'#fff'}"/>`).join('')+
+    P.map((r,i)=>filled[i]?'':`<text class="lab${r.s?' sm':''}" x="${r.x}" y="${r.y}">${qs[i].txt}</text>`).join('');
+}
+function start(){
+  const P=PICS[pic];qs=P.map(r=>makeQ(r.n));filled=P.map(()=>false);tries=P.map(()=>0);
+  $('done').classList.remove('on');draw();
+  document.querySelectorAll('#modes .pill').forEach(b=>b.setAttribute('aria-pressed',b.dataset.m===mode));
+  document.querySelectorAll('#pics .pill').forEach(b=>b.setAttribute('aria-pressed',+b.dataset.p===pic));
+  crayons();
+  msg(mode==='num'?'Match each number to the crayon with the same number!':mode==='miss'?'Find the missing number. That number is your crayon!':'Work out each sum. The answer tells you which crayon to use!');
+}
+function crayons(){
+  $('box').innerHTML=COLS.slice(1).map((c,i)=>`<button class="crayon" data-n="${i+1}" style="background:${c.c}" aria-pressed="${sel===i+1}" aria-label="${val(i+1)} ${c.n}">${val(i+1)}<span class="nm">${c.n}</span></button>`).join('');
+}
+$('box').addEventListener('click',e=>{const b=e.target.closest('.crayon');if(!b)return;sel=+b.dataset.n;crayons();beep(520,.12);const sv=val(sel);say(sv+', '+COLS[sel].n);msg('You picked '+COLS[sel].n+' — number '+sv+'. Now find the answers that make '+sv+'!')});
+$('art').addEventListener('click',e=>{
+  const el=e.target.closest('.reg');if(!el)return;const i=+el.dataset.i,r=PICS[pic][i];
+  if(filled[i])return;
+  const q=qs[i],v=val(r.n),ans=mode==='miss'?'? = '+v:q.txt+' = '+v;
+  if(!sel){msg('First pick a crayon! What is '+q.txt+'?');say(q.say);return}
+  if(sel===r.n){
+    filled[i]=true;stars++;showStars();beep(660,.1);setTimeout(()=>beep(880,.15),90);
+    msg(mode==='num'?'Yes! That is '+v+'. ⭐':'Yes! '+ans+'. ⭐');say(mode==='num'?'Yes!':mode==='miss'?'Yes! It is '+v:'Yes! '+q.say+' is '+v);draw();
+    if(filled.every(Boolean))finish();
+  }else{
+    tries[i]++;beep(200,.2);el.classList.remove('shake');void el.getBBox();el.classList.add('shake');
+    msg(mode==='num'?'Not quite! Look for crayon number '+q.txt+'.':'Not quite! What is '+q.txt+'? Try counting on your fingers.');
+    say('Not quite. What is '+q.say+'?');
+    if(tries[i]>=2){const c=document.querySelector(`.crayon[data-n="${r.n}"]`);if(c){c.classList.remove('hint');void c.offsetWidth;c.classList.add('hint')}msg('Here is a clue: '+ans+'. Look at the wiggling crayon!')}
+  }
+});
+function finish(){
+  stars+=3;showStars();say('Well done! You coloured the whole picture!');
+  $('doneTxt').textContent='You coloured the whole picture and got 3 bonus stars!';
+  setTimeout(()=>$('done').classList.add('on'),600);
+  const cs=COLS.slice(1).map(c=>c.c);
+  for(let k=0;k<40;k++){const d=document.createElement('div');d.className='conf';d.style.left=Math.random()*100+'vw';d.style.background=cs[k%8];d.style.animationDelay=Math.random()*.8+'s';document.body.appendChild(d);setTimeout(()=>d.remove(),3500)}
+}
+$('next').addEventListener('click',()=>{pic=(pic+1)%PICS.length;start()});
+$('again').addEventListener('click',start);
+$('modes').addEventListener('click',e=>{const b=e.target.closest('[data-m]');if(b){mode=b.dataset.m;start()}});
+$('pics').addEventListener('click',e=>{const b=e.target.closest('[data-p]');if(b){pic=+b.dataset.p;start()}});
+$('talk').addEventListener('click',()=>{talk=!talk;$('talk').setAttribute('aria-pressed',talk);$('talk').textContent=talk?'🔊 Read aloud':'🔇 Quiet';try{speechSynthesis.cancel()}catch(e){}});
+crayons();showStars();start();
+if('serviceWorker' in navigator){addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}))}
+}
+</script>
+<p style="text-align:center;font-size:14px;margin:0 0 16px"><a href="privacy.html" style="color:inherit">Privacy policy</a></p>
+</body>
+</html>
